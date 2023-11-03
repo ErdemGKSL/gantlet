@@ -1,6 +1,6 @@
 {
   "name": "gantlet",
-  "version": "0.0.1-dev.0",
+  "version": "0.0.1-dev.1",
   "description": "A lightweight rest framework",
   "main": "dist/index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ErdemGKSL/expresso.js.git"
+    "url": "git+https://github.com/ErdemGKSL/gantlet.git"
   },
   "keywords": [
     "express",
@@ -17,9 +17,9 @@
   "author": "ErdemGKSL",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ErdemGKSL/expresso.js/issues"
+    "url": "https://github.com/ErdemGKSL/gantlet/issues"
   },
-  "homepage": "https://github.com/ErdemGKSL/expresso.js#readme",
+  "homepage": "https://github.com/ErdemGKSL/gantlet#readme",
   "devDependencies": {
     "@types/node": "^20.8.10",
     "tslib": "^2.6.2",
