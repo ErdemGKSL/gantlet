@@ -3,6 +3,7 @@ import path from "path";
 import { getFilePathFromCallStack } from "./getFilePathFromCallStack";
 import { Route, RouteHandler, RouteMethods } from "./Route";
 import { MiddleWare, MiddleWareHandler } from "./Middleware";
+import fs from "fs/promises";
 
 type TCalculationResult = {
   $routes?: Route[];
@@ -34,8 +35,14 @@ export class App {
   private routes: Route[] = [];
   private middlewares: MiddleWare[] = [];
   private calculation: TCalculation = {};
+
   constructor(routesPath?: PathLike) {
     this.path = routesPath ? path.resolve(process.cwd(), routesPath.toString()) : path.resolve(getFilePathFromCallStack(), "./routes")
+  }
+
+  public async listen(port: number) {
+    await recursiveImport(this.path);
+    // TODO: HTTP Server
   }
 
   private addRoute(routePath: string, method: RouteMethods, handler: RouteHandler) {
@@ -135,3 +142,14 @@ export class App {
   }
 }
 
+async function recursiveImport(scanPath: string) {
+  const target = await fs.stat(scanPath);
+  if (target.isFile()) {
+    await import(scanPath);
+  } else if (target.isDirectory()) {
+    const files = await fs.readdir(scanPath);
+    for (const file of files) {
+      await recursiveImport(path.resolve(scanPath, file));
+    }
+  }
+}

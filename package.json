@@ -1,6 +1,6 @@
 {
   "name": "gantlet",
-  "version": "0.0.1-dev.10",
+  "version": "0.0.1-dev.11",
   "description": "A lightweight rest framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
