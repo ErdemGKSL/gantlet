@@ -1,7 +1,7 @@
 {
-  "name": "expresso.js",
-  "version": "0.0.0",
-  "description": "A lightweight http framework",
+  "name": "gantlet",
+  "version": "0.0.1-dev.0",
+  "description": "A lightweight rest framework",
   "main": "dist/index.js",
   "scripts": {
     "test": "ts-node src/test.ts"
