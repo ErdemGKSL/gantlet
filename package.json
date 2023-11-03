@@ -1,0 +1,28 @@
+{
+  "name": "expresso.js",
+  "version": "0.0.0",
+  "description": "A lightweight http framework",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "ts-node src/test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ErdemGKSL/expresso.js.git"
+  },
+  "keywords": [
+    "express",
+    "http"
+  ],
+  "author": "ErdemGKSL",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ErdemGKSL/expresso.js/issues"
+  },
+  "homepage": "https://github.com/ErdemGKSL/expresso.js#readme",
+  "devDependencies": {
+    "@types/node": "^20.8.10",
+    "tslib": "^2.6.2",
+    "typescript": "^5.2.2"
+  }
+}
