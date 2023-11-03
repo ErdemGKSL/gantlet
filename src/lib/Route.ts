@@ -3,9 +3,7 @@ import type { App } from "./App";
 export class Route {
   
 
-  constructor(private app: App, private path: string, public method: RouteMethods, public handler: RouteHandler) {
-
-  }
+  constructor(private app: App, private path: string[], public method: RouteMethods, public handler: RouteHandler) {}
 
 }
 

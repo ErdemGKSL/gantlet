@@ -1,6 +1,6 @@
 {
   "name": "gantlet",
-  "version": "0.0.1-dev.2",
+  "version": "0.0.1-dev.10",
   "description": "A lightweight rest framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,7 +23,9 @@
   "homepage": "https://github.com/ErdemGKSL/gantlet#readme",
   "devDependencies": {
     "@types/node": "^20.8.10",
-    "tslib": "^2.6.2",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "tslib": "^2.6.2"
   }
 }
