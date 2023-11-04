@@ -1,7 +1,8 @@
 {
-  // Mapped from https://www.typescriptlang.org/tsconfig
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  },
   "compilerOptions": {
-    // Type Checking
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "noFallthroughCasesInSwitch": true,
@@ -10,24 +11,19 @@
     "strict": false,
     "useUnknownInCatchVariables": true,
     "noUncheckedIndexedAccess": true,
-    // Modules
     "module": "commonjs",
     "moduleResolution": "Node",
     "resolveJsonModule": true,
-    // Emit
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
     "importHelpers": true,
-    "inlineSources": true,
     "newLine": "lf",
     "noEmitHelpers": true,
     "outDir": "dist",
     "preserveConstEnums": true,
     "removeComments": false,
-    "sourceMap": true,
+    "sourceMap": false,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    // Language and Environment
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "lib": [
@@ -35,14 +31,8 @@
     ],
     "target": "ESNext",    
     "useDefineForClassFields": true,
-    "rootDir": "./src"
-  },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist/**/*",
-    "assets/**/*"
-  ]
+    "paths": {
+      "@src/*": ["./src/*"]
+    }
+  }
 }
