@@ -72,9 +72,10 @@ export async function init(directory: string) {
 
   if (useTypeScript) {
     await execAsync(`${installCommand} typescript ts-node @types/node tslib tsconfig-paths dotenv`, packageJsonDirectory).catch(() => {});
-    copyFolderIntoFolder(path.resolve(__dirname, "../../assets/skeletons/typescript"), directoryPath);
+    copyFolderIntoFolder(path.resolve(__dirname, "../../assets/templates/typescript"), directoryPath);
   } else {
     await execAsync(`${installCommand} dotenv`, packageJsonDirectory).catch(() => {});
+    copyFolderIntoFolder(path.resolve(__dirname, "../../assets/templates/javascript"), directoryPath);
   }
 }
 
