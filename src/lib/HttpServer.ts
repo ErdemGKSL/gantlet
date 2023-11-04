@@ -100,7 +100,15 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
     }
 
     for (const key in routeObj) {
-       if (key.includes("[") && key.includes("]")) {
+      if (isInParanthesis(key)) {
+        const result = await recursiveHandleRoutes(route.slice(0), method, routeObj[key] as TCalculation, app, ctx);
+        if (!resolved) resolve(result);
+        resolved = true;
+      } else if (key === route[0]) {
+        const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, ctx);
+        if (!resolved) resolve(result);
+        resolved = true;
+      } else if (key.includes("[") && key.includes("]")) {
         const regex = new RegExp(
           "^" +
           key.replace(
@@ -121,10 +129,6 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
           if (!resolved) resolve(result);
           resolved = true;
         }
-      } else if (key === route[0]) {
-        const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, ctx);
-        if (!resolved) resolve(result);
-        resolved = true;
       }
     }
   });
@@ -141,4 +145,25 @@ export interface HandlerContext {
   params: { [k: string]: any };
   extra: { [k: string]: any };
   stop: () => void;
+}
+
+function isInParanthesis(str: string) {
+  if (str.startsWith("(") && str.endsWith(")")) {
+    let left = 0;
+    let right = 0;
+    for (const char of str) {
+      switch (char) {
+        case "(": {
+          left++;
+          break;
+        }
+        case ")": {
+          right++;
+          break;
+        }
+      }
+    }
+    return left === right;
+  }
+  return false;
 }
