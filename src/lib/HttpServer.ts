@@ -130,7 +130,7 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
   });
 }
 
-export type Handler = (ctx: HandlerContext) => void | Promise<void>;
+export type Handler = (ctx: HandlerContext) => any | Promise<any>;
 
 export interface HandlerContext {
   req: http.IncomingMessage;

@@ -39,7 +39,7 @@ export class App {
   private httpServer: HttpServer;
 
   constructor(routesPath?: PathLike) {
-    this.path = routesPath ? path.resolve(process.cwd(), routesPath.toString()) : path.resolve(getFilePathFromCallStack(), "./routes")
+    this.path = routesPath ? path.resolve(process.cwd(), routesPath.toString()) : path.resolve(path.dirname(getFilePathFromCallStack()), "./routes")
   }
 
   public async listen(port: number, cb?: () => void, onError?: (error: Error) => void) {
