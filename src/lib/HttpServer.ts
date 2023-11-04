@@ -38,33 +38,38 @@ export class HttpServer {
           const route = url.pathname.split("/").filter(Boolean);
           const method = req.method as RouteMethods;
 
-          const context = { req, res, body, query, params: {}, stop: () => null, url, extra: {} };
+          const context = {
+            req, res, body, query, params: {}, stop: () => null, url, extra: {}, send: async (data: any) => {
+              if (!res.writableEnded) {
+                switch (typeof data) {
+                  case "string": case "function": {
+                    res.setHeader("Content-Type", "text/plain");
+                    res.setHeader("Content-Length", new Blob([data.toString()]).size);
+                    const chunks = data.toString().match(/.{1,512}/gsm);
+                    for (const chunk of chunks ?? []) await writeResponseData(res, chunk);
+                    break;
+                  }
+                  case "number": case "boolean": case "object": {
+                    res.setHeader("Content-Type", "application/json");
+                    const content = JSON.stringify(data);
+                    res.setHeader("Content-Length", new Blob([content]).size);
+                    const chunks = content.match(/.{1,512}/gsm);
+                    for (const chunk of chunks ?? []) await writeResponseData(res, chunk);
+                    break;
+                  }
+                  default: {
+                    break;
+                  }
+                }
+                await new Promise<void>((resolve) => {
+                  res.end(() => resolve());
+                });
+              }
+            }
+          };
 
           const response = await recursiveHandleRoutes(route, method, this.app.calculation, this.app, context);
-
-          if (!res.writableEnded) switch (typeof response) {
-            case "string": case "number": case "boolean": {
-              res.setHeader("Content-Type", "text/plain");
-              res.setHeader("Content-Length", response.toString().length + 1);
-              const chunks = response.toString().match(/.{1,512}/gsm);
-              for (const chunk of chunks ?? []) await writeResponseData(res, chunk);
-              res.end();
-              break;
-            }
-            case "object": {
-              res.setHeader("Content-Type", "application/json");
-              const content = JSON.stringify(response);
-              res.setHeader("Content-Length", content.length + 1);
-              const chunks = content.match(/.{1,512}/gsm);
-              for (const chunk of chunks ?? []) await writeResponseData(res, chunk);
-              res.end();
-              break;
-            }
-            default: {
-              res.end();
-              break;
-            }
-          }
+          await context.send(response);
         } catch (error) {
           this.onError(error as Error);
         }
@@ -166,6 +171,7 @@ export interface HandlerContext {
   params: { [k: string]: any };
   extra: { [k: string]: any };
   stop: () => void;
+  send: (data: any) => Promise<void>;
 }
 
 function isInParanthesis(str: string) {
