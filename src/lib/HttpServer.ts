@@ -45,15 +45,19 @@ export class HttpServer {
           if (!res.writableEnded) switch (typeof response) {
             case "string": {
               res.setHeader("Content-Type", "text/plain");
-              res.setHeader("Content-Length", response.length);
-              res.end(response);
+              res.setHeader("Content-Length", response.length + 1);
+              const chunks = response.match(/.{1,512}/gsm);
+              for (const chunk of chunks ?? []) await writeResponseData(res, chunk);
+              res.end();
               break;
             }
             case "object": {
               res.setHeader("Content-Type", "application/json");
               const content = JSON.stringify(response);
-              res.setHeader("Content-Length", content.length);
-              res.end(content);
+              res.setHeader("Content-Length", content.length + 1);
+              const chunks = content.match(/.{1,512}/gsm);
+              for (const chunk of chunks ?? []) await writeResponseData(res, chunk);
+              res.end();
               break;
             }
             default: {
@@ -71,6 +75,12 @@ export class HttpServer {
   public async listen(cb?: () => void) {
     this.server.listen(this.port, typeof cb === "function" ? cb : (() => void 0));
   }
+}
+
+function writeResponseData(res: http.ServerResponse, data: string) {
+  return new Promise<void>((resolve) => {
+    res.write(data, () => resolve());
+  });
 }
 
 function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: TCalculation, app: App, ctx: HandlerContext) {
