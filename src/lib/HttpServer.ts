@@ -100,7 +100,7 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
     }
 
     for (const key in routeObj) {
-       if (key.includes("[")) {
+       if (key.includes("[") && key.includes("]")) {
         const regex = new RegExp(
           "^" +
           key.replace(
