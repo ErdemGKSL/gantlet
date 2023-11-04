@@ -1,10 +1,9 @@
 import type { App } from "./App";
+import type { Handler } from "./HttpServer";
 
-export class MiddleWare {
+export class Middleware {
   
 
-  constructor(private app: App, private path: string[], public handler: MiddleWareHandler) {}
+  constructor(private app: App, private path: string[], public handler: Handler) {}
 
 }
-
-export type MiddleWareHandler = (req: any, res: any) => void;

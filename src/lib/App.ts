@@ -1,20 +1,21 @@
 import { PathLike } from "fs";
 import path from "path";
 import { getFilePathFromCallStack } from "./getFilePathFromCallStack";
-import { Route, RouteHandler, RouteMethods } from "./Route";
-import { MiddleWare, MiddleWareHandler } from "./Middleware";
+import { Route, RouteMethods } from "./Route";
+import { Middleware } from "./Middleware";
 import fs from "fs/promises";
+import { Handler, HttpServer } from "./HttpServer";
 
 type TCalculationResult = {
   $routes?: Route[];
-  $middlewares?: MiddleWare[];
-} & TCalculation
+  $middlewares?: Middleware[];
+}
 
-type TCalculation = {
+export type TCalculation = {
   [key: string]: TCalculationResult | TCalculation;
 }
 
-function recursiveComponentSet(obj: TCalculationResult, path: string[], component: Route | MiddleWare) {
+function recursiveComponentSet(obj: TCalculationResult, path: string[], component: Route | Middleware) {
   if (path.length === 0) {
     if (component instanceof Route) {
       if (!obj.$routes) obj.$routes = [];
@@ -33,19 +34,22 @@ export class App {
 
   path: string;
   private routes: Route[] = [];
-  private middlewares: MiddleWare[] = [];
-  private calculation: TCalculation = {};
+  private middlewares: Middleware[] = [];
+  public calculation: TCalculation = {};
+  private httpServer: HttpServer;
 
   constructor(routesPath?: PathLike) {
     this.path = routesPath ? path.resolve(process.cwd(), routesPath.toString()) : path.resolve(getFilePathFromCallStack(), "./routes")
   }
 
-  public async listen(port: number) {
+  public async listen(port: number, cb?: () => void, onError?: (error: Error) => void) {
     await recursiveImport(this.path);
-    // TODO: HTTP Server
+    this.httpServer = new HttpServer(port, this);
+    onError && (this.httpServer.onError = onError);
+    await this.httpServer.listen(cb);
   }
 
-  private addRoute(routePath: string, method: RouteMethods, handler: RouteHandler) {
+  private addRoute(routePath: string, method: RouteMethods, handler: Handler) {
     const routeArray = routePath.split(/\\+/);
     if (routeArray.at(-1).startsWith("index.")) routeArray.pop();
     const route = new Route(this, routeArray, method, handler);
@@ -53,15 +57,15 @@ export class App {
     this.routes.push(route);
   }
 
-  private addMiddleware(mWarePath: string, handler: MiddleWareHandler) {
+  private addMiddleware(mWarePath: string, handler: Handler) {
     const mWareArray = mWarePath.split(/\\+/);
     if (mWareArray.at(-1).startsWith("index.")) mWareArray.pop();
-    const mWare = new MiddleWare(this, mWareArray, handler);
+    const mWare = new Middleware(this, mWareArray, handler);
     recursiveComponentSet(this.calculation, mWareArray, mWare);
     this.middlewares.push(mWare);
   }
 
-  public use(handler: MiddleWareHandler) {
+  public use(handler: Handler) {
     const mWarePath = path.relative(this.path, getFilePathFromCallStack());
     this.addMiddleware(
       mWarePath,
@@ -69,7 +73,7 @@ export class App {
     );
   }
 
-  public get(handler: RouteHandler) {
+  public get(handler: Handler) {
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "GET",
@@ -77,7 +81,7 @@ export class App {
     );
   }
 
-  public post(handler: RouteHandler) {
+  public post(handler: Handler) {
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "POST",
@@ -85,7 +89,7 @@ export class App {
     );
   }
 
-  public put(handler: RouteHandler) {
+  public put(handler: Handler) {
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "PUT",
@@ -93,7 +97,7 @@ export class App {
     );
   }
 
-  public delete(handler: RouteHandler) {
+  public delete(handler: Handler) {
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "DELETE",
@@ -101,7 +105,7 @@ export class App {
     );
   }
 
-  public patch(handler: RouteHandler) {
+  public patch(handler: Handler) {
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "PATCH",
@@ -109,7 +113,7 @@ export class App {
     );
   }
 
-  public options(handler: RouteHandler) {
+  public options(handler: Handler) {
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "OPTIONS",
@@ -117,7 +121,7 @@ export class App {
     );
   }
 
-  public head(handler: RouteHandler) {
+  public head(handler: Handler) {
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "HEAD",
@@ -125,7 +129,7 @@ export class App {
     );
   }
 
-  public connect(handler: RouteHandler) {
+  public connect(handler: Handler) {
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "CONNECT",
@@ -133,7 +137,7 @@ export class App {
     );
   }
 
-  public trace(handler: RouteHandler) {
+  public trace(handler: Handler) {
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "TRACE",
