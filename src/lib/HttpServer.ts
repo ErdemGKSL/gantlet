@@ -38,7 +38,7 @@ export class HttpServer {
           const route = url.pathname.split("/").filter(Boolean);
           const method = req.method as RouteMethods;
 
-          const context = { req, res, body, query, params: {}, stop: () => null, url };
+          const context = { req, res, body, query, params: {}, stop: () => null, url, extra: {} };
 
           const response = await recursiveHandleRoutes(route,method, this.app.calculation, this.app, context);
 
@@ -138,6 +138,7 @@ export interface HandlerContext {
   url: URL;
   body: { [k: string]: any } | string;
   query: { [k: string]: any };
-  params?: { [k: string]: any };
+  params: { [k: string]: any };
+  extra: { [k: string]: any };
   stop: () => void;
 }
