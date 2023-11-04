@@ -40,7 +40,7 @@ export class HttpServer {
 
           const context = { req, res, body, query, params: {}, stop: () => null, url, extra: {} };
 
-          const response = await recursiveHandleRoutes(route,method, this.app.calculation, this.app, context);
+          const response = await recursiveHandleRoutes(route, method, this.app.calculation, this.app, context);
 
           if (!res.writableEnded) switch (typeof response) {
             case "string": {
@@ -96,38 +96,39 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
           }
         }
       }
-      return;
     }
 
     for (const key in routeObj) {
       if (isInParanthesis(key)) {
-        const result = await recursiveHandleRoutes(route.slice(0), method, routeObj[key] as TCalculation, app, { ...ctx ,extra: { ...ctx.extra} });
+        const result = await recursiveHandleRoutes(route.slice(0), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } });
         if (!resolved) resolve(result);
         resolved = true;
-      } else if (key === route[0]) {
-        const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx ,extra: { ...ctx.extra} });
-        if (!resolved) resolve(result);
-        resolved = true;
-      } else if (key.includes("[") && key.includes("]")) {
-        const regex = new RegExp(
-          "^" +
-          key.replace(
-            /\[([_a-zA-Z0-9\-]*)\]/g,
-            "(?<$1>.*)"
-          ) +
-          "$"
-        );
-
-        const match = route[0].match(regex);
-
-        if (match) {
-          ctx.params = {
-            ...ctx.params,
-            ...(match.groups ?? {})
-          }
-          const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx ,extra: { ...ctx.extra} });
+      } else if (route.length >= 1) {
+        if (key === route[0]) {
+          const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } });
           if (!resolved) resolve(result);
           resolved = true;
+        } else if (key.includes("[") && key.includes("]")) {
+          const regex = new RegExp(
+            "^" +
+            key.replace(
+              /\[([_a-zA-Z0-9\-]*)\]/g,
+              "(?<$1>.*)"
+            ) +
+            "$"
+          );
+
+          const match = route[0].match(regex);
+
+          if (match) {
+            ctx.params = {
+              ...ctx.params,
+              ...(match.groups ?? {})
+            }
+            const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } });
+            if (!resolved) resolve(result);
+            resolved = true;
+          }
         }
       }
     }
