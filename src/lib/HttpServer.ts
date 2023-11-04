@@ -88,7 +88,7 @@ function writeResponseData(res: http.ServerResponse, data: string) {
   });
 }
 
-function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: TCalculation, app: App, ctx: HandlerContext) {
+function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: TCalculation, app: App, ctx: HandlerContext, isRest = false) {
   return new Promise<any>(async (resolve) => {
     let resolved = false;
     let stopped = false;
@@ -100,7 +100,7 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
       }
     }
 
-    if (route.length === 0) {
+    if (route.length === 0 || isRest) {
       if ("$routes" in routeObj) {
         for (const route of (routeObj.$routes as Route[])) {
           if (route.method === ctx.req.method) {
@@ -115,43 +115,59 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
       }
     }
 
+    if (isRest) {
+      if (!resolved) resolve(undefined);
+      return;
+    }
+
     for (const key in routeObj) {
       if (isInParanthesis(key)) {
-        const result = await recursiveHandleRoutes(route.slice(0), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } });
+        const result = await recursiveHandleRoutes(route.slice(0), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } }, false);
         if (result !== undefined) {
           if (!resolved) resolve(result);
           resolved = true;
         }
       } else if (route.length >= 1) {
         if (key === route[0]) {
-          const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } });
+          const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } }, false);
           if (result !== undefined) {
             if (!resolved) resolve(result);
             resolved = true;
           }
         } else if (key.includes("[") && key.includes("]")) {
-          const regex = new RegExp(
-            "^" +
-            key.replace(
-              /\[([_a-zA-Z0-9\-]*)\]/g,
-              "(?<$1>.*)"
-            ) +
-            "$"
-          );
-
-          const match = route[0].match(regex);
-
-          if (match) {
-            ctx.params = {
-              ...ctx.params,
-              ...(match.groups ?? {})
-            }
-            const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } });
+          const rest = key.match(/^\[\.\.\.([_a-zA-Z0-9\-]*)]$/)?.[1];
+          if (rest) {
+            ctx.params[rest] = route.join("/");
+            const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } }, true);
             if (result !== undefined) {
               if (!resolved) resolve(result);
               resolved = true;
             }
+          } else {
+            const regex = new RegExp(
+              "^" +
+              key.replace(
+                /\[([_a-zA-Z0-9\-]*)\]/g,
+                "(?<$1>.*)"
+              ) +
+              "$"
+            );
+
+            const match = route[0].match(regex);
+
+            if (match) {
+              ctx.params = {
+                ...ctx.params,
+                ...(match.groups ?? {})
+              }
+              const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } }, false);
+              if (result !== undefined) {
+                if (!resolved) resolve(result);
+                resolved = true;
+              }
+            }
           }
+
         }
       }
     }
