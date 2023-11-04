@@ -43,10 +43,10 @@ export class HttpServer {
           const response = await recursiveHandleRoutes(route, method, this.app.calculation, this.app, context);
 
           if (!res.writableEnded) switch (typeof response) {
-            case "string": {
+            case "string": case "number": case "boolean": {
               res.setHeader("Content-Type", "text/plain");
-              res.setHeader("Content-Length", response.length + 1);
-              const chunks = response.match(/.{1,512}/gsm);
+              res.setHeader("Content-Length", response.toString().length + 1);
+              const chunks = response.toString().match(/.{1,512}/gsm);
               for (const chunk of chunks ?? []) await writeResponseData(res, chunk);
               res.end();
               break;
@@ -91,7 +91,7 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
     if ("$middlewares" in routeObj) {
       for (const mWare of (routeObj.$middlewares as Middleware[])) {
         await mWare.handler(ctx);
-        if (stopped) return;
+        if (stopped) return resolve(undefined);
       }
     }
 
@@ -100,9 +100,11 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
         for (const route of (routeObj.$routes as Route[])) {
           if (route.method === ctx.req.method) {
             const result = await route.handler(ctx);
-            if (resolved === false) resolve(result);
-            resolved = true;
-            if (stopped) return;
+            if (result !== undefined) {
+              if (resolved === false) resolve(result);
+              resolved = true;
+            }
+            if (stopped) return !resolved && resolve(undefined);
           }
         }
       }
@@ -111,13 +113,17 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
     for (const key in routeObj) {
       if (isInParanthesis(key)) {
         const result = await recursiveHandleRoutes(route.slice(0), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } });
-        if (!resolved) resolve(result);
-        resolved = true;
+        if (result !== undefined) {
+          if (!resolved) resolve(result);
+          resolved = true;
+        }
       } else if (route.length >= 1) {
         if (key === route[0]) {
           const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } });
-          if (!resolved) resolve(result);
-          resolved = true;
+          if (result !== undefined) {
+            if (!resolved) resolve(result);
+            resolved = true;
+          }
         } else if (key.includes("[") && key.includes("]")) {
           const regex = new RegExp(
             "^" +
@@ -136,12 +142,16 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
               ...(match.groups ?? {})
             }
             const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx, extra: { ...ctx.extra } });
-            if (!resolved) resolve(result);
-            resolved = true;
+            if (result !== undefined) {
+              if (!resolved) resolve(result);
+              resolved = true;
+            }
           }
         }
       }
     }
+
+    if (!resolved) resolve(undefined);
   });
 }
 
