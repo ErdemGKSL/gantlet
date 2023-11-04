@@ -104,7 +104,7 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
         const regex = new RegExp(
           "^" +
           key.replace(
-            /\[([_a-zA-Z0-9]*)\]/g,
+            /\[([_a-zA-Z0-9\-]*)\]/g,
             "(?<$1>.*)"
           ) +
           "$"
