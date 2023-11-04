@@ -101,11 +101,11 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
 
     for (const key in routeObj) {
       if (isInParanthesis(key)) {
-        const result = await recursiveHandleRoutes(route.slice(0), method, routeObj[key] as TCalculation, app, ctx);
+        const result = await recursiveHandleRoutes(route.slice(0), method, routeObj[key] as TCalculation, app, { ...ctx ,extra: { ...ctx.extra} });
         if (!resolved) resolve(result);
         resolved = true;
       } else if (key === route[0]) {
-        const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, ctx);
+        const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx ,extra: { ...ctx.extra} });
         if (!resolved) resolve(result);
         resolved = true;
       } else if (key.includes("[") && key.includes("]")) {
@@ -125,7 +125,7 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
             ...ctx.params,
             ...(match.groups ?? {})
           }
-          const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, ctx);
+          const result = await recursiveHandleRoutes(route.slice(1), method, routeObj[key] as TCalculation, app, { ...ctx ,extra: { ...ctx.extra} });
           if (!resolved) resolve(result);
           resolved = true;
         }
