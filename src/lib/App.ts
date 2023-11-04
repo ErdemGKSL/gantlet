@@ -6,16 +6,14 @@ import { Middleware } from "./Middleware";
 import fs from "fs/promises";
 import { Handler, HttpServer } from "./HttpServer";
 
-type TCalculationResult = {
-  $routes?: Route[];
-  $middlewares?: Middleware[];
-}
 
 export type TCalculation = {
-  [key: string]: TCalculationResult | TCalculation;
+  $routes?: Route[];
+  $middlewares?: Middleware[];
+  [key: string]: TCalculation | Route[] | Middleware[];
 }
 
-function recursiveComponentSet(obj: TCalculationResult, path: string[], component: Route | Middleware) {
+function recursiveComponentSet(obj: TCalculation, path: string[], component: Route | Middleware) {
   if (path.length === 0) {
     if (component instanceof Route) {
       if (!obj.$routes) obj.$routes = [];
@@ -27,7 +25,7 @@ function recursiveComponentSet(obj: TCalculationResult, path: string[], componen
     return;
   }
   if (!obj[path[0]]) obj[path[0]] = {};
-  recursiveComponentSet(obj[path[0]] as TCalculationResult, path.slice(1), component);
+  recursiveComponentSet(obj[path[0]] as TCalculation, path.slice(1), component);
 }
 
 export class App {
