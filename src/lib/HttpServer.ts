@@ -38,8 +38,15 @@ export class HttpServer {
           const route = url.pathname.split("/").filter(Boolean);
           const method = req.method as RouteMethods;
 
+          const lazyData = [];
+
           const context = {
-            req, res, body, query, params: {}, stop: () => null, url, extra: {}, send: async (data: any) => {
+            req, res, body, query, params: {}, stop: () => null, url, extra: {}, send: async (data: any, lazy?: boolean) => {
+              if (lazy) {
+                lazyData.push(data);
+                return;
+              }
+
               if (!res.writableEnded) {
                 switch (typeof data) {
                   case "string": case "function": {
@@ -72,6 +79,10 @@ export class HttpServer {
 
           if (response !== undefined) {
             await context.send(response);
+          }
+
+          for (const data of lazyData) {
+            await context.send(data);
           }
 
           this.app.bindings.express.emit(req as any, res as any);
@@ -192,7 +203,7 @@ export interface HandlerContext {
   params: { [k: string]: any };
   extra: { [k: string]: any };
   stop: () => void;
-  send: (data: any) => Promise<void>;
+  send: (data: any, lazy?: boolean) => Promise<void>;
 }
 
 function isInParanthesis(str: string) {
