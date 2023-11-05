@@ -5,6 +5,7 @@ import { Route, RouteMethods } from "./Route";
 import { Middleware } from "./Middleware";
 import fs from "fs/promises";
 import { Handler, HttpServer } from "./HttpServer";
+import { ExpressHandler } from "./ExpressHandler";
 
 
 export type TCalculation = {
@@ -28,6 +29,15 @@ function recursiveComponentSet(obj: TCalculation, path: string[], component: Rou
   recursiveComponentSet(obj[path[0]] as TCalculation, path.slice(1), component);
 }
 
+class Bindings {
+
+  express: ExpressHandler;
+  constructor(private app: App) {
+    this.express = new ExpressHandler(this.app);
+  }
+
+}
+
 export class App {
 
   path: string;
@@ -35,6 +45,7 @@ export class App {
   private middlewares: Middleware[] = [];
   public calculation: TCalculation = {};
   private httpServer: HttpServer;
+  public bindings = new Bindings(this);
 
   constructor(routesPath?: PathLike) {
     this.path = routesPath ? path.resolve(process.cwd(), routesPath.toString()) : path.resolve(path.dirname(getFilePathFromCallStack()), "./routes")
@@ -42,7 +53,7 @@ export class App {
 
   public async listen(port: number, cb?: () => void, onError?: (error: Error) => void) {
     await recursiveImport(this.path);
-    this.httpServer = new HttpServer(port, this);
+    if (!this.httpServer) this.httpServer = new HttpServer(port, this);
     onError && (this.httpServer.onError = onError);
     await this.httpServer.listen(cb);
   }
@@ -71,6 +82,14 @@ export class App {
     const mWarePath = path.relative(this.path, getFilePathFromCallStack());
     this.addMiddleware(
       mWarePath,
+      handler
+    );
+  }
+
+  public all(handler: Handler) {
+    this.addRoute(
+      path.relative(this.path, getFilePathFromCallStack()),
+      "ALL",
       handler
     );
   }

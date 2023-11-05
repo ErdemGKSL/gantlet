@@ -10,6 +10,9 @@ export class HttpServer {
   public onError: (error: Error) => void = () => void 0;
   constructor(public port: number, public app: App) {
     this.server = http.createServer((req, res) => {
+
+      this.app.bindings.express.emit(req as any, res as any);
+
       let data = [];
 
       req.on('data', (chunk) => {
@@ -69,7 +72,6 @@ export class HttpServer {
           };
 
           const response = await recursiveHandleRoutes(route, method, this.app.calculation, this.app, context);
-          await context.send(response);
         } catch (error) {
           this.onError(error as Error);
         }
@@ -103,7 +105,7 @@ function recursiveHandleRoutes(route: string[], method: RouteMethods, routeObj: 
     if (route.length === 0 || isRest) {
       if ("$routes" in routeObj) {
         for (const route of (routeObj.$routes as Route[])) {
-          if (route.method === ctx.req.method) {
+          if (route.method === ctx.req.method || route.method === "ALL") {
             const result = await route.handler(ctx);
             if (result !== undefined) {
               if (resolved === false) resolve(result);
