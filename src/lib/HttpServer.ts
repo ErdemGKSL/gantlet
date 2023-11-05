@@ -10,9 +10,6 @@ export class HttpServer {
   public onError: (error: Error) => void = () => void 0;
   constructor(public port: number, public app: App) {
     this.server = http.createServer((req, res) => {
-
-      this.app.bindings.express.emit(req as any, res as any);
-
       let data = [];
 
       req.on('data', (chunk) => {
@@ -72,6 +69,12 @@ export class HttpServer {
           };
 
           const response = await recursiveHandleRoutes(route, method, this.app.calculation, this.app, context);
+
+          if (response !== undefined) {
+            await context.send(response);
+          }
+
+          this.app.bindings.express.emit(req as any, res as any);
         } catch (error) {
           this.onError(error as Error);
         }
