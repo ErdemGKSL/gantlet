@@ -39,38 +39,73 @@ export class HttpServer {
           const method = req.method as RouteMethods;
 
           const lazyData = [];
+          let isEventEmitter = false;
 
           const context = {
-            req, res, body, query, params: {}, stop: () => null, url, extra: {}, send: async (data: any, lazy?: boolean) => {
+            req,
+            res,
+            body,
+            query,
+            params: {},
+            stop: () => null,
+            url,
+            extra: {},
+            send: async (data: any, lazy?: boolean) => {
               if (lazy) {
                 lazyData.push(data);
                 return;
               }
 
-              if (!res.writableEnded) {
+              if (!res.writableEnded && !isEventEmitter) {
                 switch (typeof data) {
                   case "string": case "function": {
                     res.setHeader("Content-Type", "text/plain");
-                    res.setHeader("Content-Length", new Blob([data.toString()]).size);
-                    const chunks = data.toString().match(/.{1,512}/gsm);
-                    for (const chunk of chunks ?? []) await writeResponseData(res, chunk);
+                    const content = data.toString();
+                    res.setHeader("Content-Length", Buffer.byteLength(content));
+                    await writeResponseDataWithEnd(res, content);
                     break;
                   }
                   case "number": case "boolean": case "object": {
-                    res.setHeader("Content-Type", "application/json");
-                    const content = JSON.stringify(data);
-                    res.setHeader("Content-Length", new Blob([content]).size);
-                    const chunks = content.match(/.{1,512}/gsm);
-                    for (const chunk of chunks ?? []) await writeResponseData(res, chunk);
+                    if (data instanceof Buffer) {
+                      if (!res.hasHeader("Content-Type")) res.setHeader("Content-Type", "application/octet-stream");
+                      res.setHeader("Content-Length", Buffer.byteLength(data));
+                      await writeResponseDataWithEnd(res, data);
+                    } else {
+                      res.setHeader("Content-Type", "application/json");
+                      const content = JSON.stringify(data);
+                      res.setHeader("Content-Length", Buffer.byteLength(content));
+                      await writeResponseDataWithEnd(res, content);
+                    }
                     break;
                   }
                   default: {
                     break;
                   }
                 }
-                await new Promise<void>((resolve) => {
-                  res.end(() => resolve());
-                });
+              }
+            },
+            startEventEmitter: () => {
+              isEventEmitter = true;
+              res.writeHead(200, {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive"
+              });
+
+              res.write("\n", "utf-8")
+
+              return {
+                emit: async (event: string, data: object) => {
+                  const content = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+                  await writeData(res, content);
+                },
+                writeRaw: async (data: string) => {
+                  await writeData(res, data);
+                },
+                destroy: async () => {
+                  await writeResponseDataWithEnd(res, "");
+                  res.destroy();
+                }
               }
             }
           };
@@ -98,7 +133,13 @@ export class HttpServer {
   }
 }
 
-function writeResponseData(res: http.ServerResponse, data: string) {
+function writeResponseDataWithEnd(res: http.ServerResponse, data: string | Buffer) {
+  return new Promise<void>((resolve) => {
+    res.end(data, () => resolve());
+  });
+}
+
+function writeData(res: http.ServerResponse, data: string) {
   return new Promise<void>((resolve) => {
     res.write(data, () => resolve());
   });
@@ -204,6 +245,11 @@ export interface HandlerContext {
   extra: { [k: string]: any };
   stop: () => void;
   send: (data: any, lazy?: boolean) => Promise<void>;
+  startEventEmitter: () => {
+    emit: (event: string, data: object) => Promise<void>;
+    writeRaw: (data: string) => Promise<void>;
+    destroy: () => Promise<void>;
+  }
 }
 
 function isInParanthesis(str: string) {
