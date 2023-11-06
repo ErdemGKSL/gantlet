@@ -29,7 +29,7 @@ export class HttpServer {
               break;
             }
             default: {
-              body = data;
+              body = data.join("");
               break;
             }
           }
