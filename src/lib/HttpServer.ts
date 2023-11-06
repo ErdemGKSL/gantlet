@@ -92,9 +92,9 @@ export class HttpServer {
                 "Connection": "keep-alive"
               });
 
-              res.write("\n", "utf-8")
+              res.write("\n", "utf-8");
 
-              return {
+              const eventEmitter = {
                 emit: async (event: string, data: object) => {
                   const content = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
                   await writeData(res, content);
@@ -105,8 +105,11 @@ export class HttpServer {
                 destroy: async () => {
                   await writeResponseDataWithEnd(res, "");
                   res.destroy();
-                }
+                },
+                isAlive: () => res.destroyed === false
               }
+
+              return eventEmitter;
             }
           };
 
@@ -249,6 +252,7 @@ export interface HandlerContext {
     emit: (event: string, data: object) => Promise<void>;
     writeRaw: (data: string) => Promise<void>;
     destroy: () => Promise<void>;
+    isAlive: () => boolean;
   }
 }
 
