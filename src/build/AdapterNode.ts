@@ -17,6 +17,10 @@ export class AdapterNode implements Adapter {
     }
 
     const tempDir = path.resolve(directory.toString(), "./.gantlet");
+    const tempRoutesPath = path.resolve(tempDir, path.relative(path.dirname(appPath as string), app.path));
+
+
+
 
     await makeSureFolderExists(
       tempDir
@@ -24,7 +28,8 @@ export class AdapterNode implements Adapter {
 
     const routeDirPath = path.resolve(appPath, app.path);
 
-    this.recursiveTranspile(appPath as string, routeDirPath, tempDir, "./");
+    this.bulkCopy(path.dirname(appPath as string), tempDir)
+    this.recursiveTranspile(appPath as string, routeDirPath, tempRoutesPath, "./");
   };
 
   private recursiveTranspile(mainAppPath: string, routesDirPath: string, buildDirPath: string, currentPath: string) {
@@ -90,6 +95,26 @@ export class AdapterNode implements Adapter {
 
     }
 
+  }
+
+  private bulkCopy(from: string, to: string) {
+    const files = fs.readdirSync(from);
+    makeSureFolderExistsSync(to);
+
+    for (const file of files) {
+      const filePath = path.resolve(from, file);
+      const toPath = path.resolve(to, file);
+
+      if (fs.statSync(filePath).isDirectory()) {
+        if (filePath.endsWith(".git")) continue;
+        if (filePath.endsWith(".gantlet")) continue;
+        if (filePath.endsWith("node_modules")) continue;
+        
+        this.bulkCopy(filePath, toPath);
+      } else {
+        fs.copyFileSync(filePath, toPath);
+      }
+    }
   }
 
 }
