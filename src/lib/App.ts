@@ -62,7 +62,7 @@ export class App {
   }
 
   private addRoute(routePath: string, method: RouteMethods, handler: Handler) {
-    const routeArray = routePath.split(/\\+/);
+    const routeArray = routePath.split(/(\\|\/)+/).map(v => v.replace(/(\/|\\)/g, "").trim()).filter(v => v?.length);
     if (routeArray.at(-1).startsWith("index.")) routeArray.pop();
     else if (routeArray.at(-1).endsWith(".ts") || routeArray.at(-1).endsWith(".js"))
       routeArray[routeArray.length - 1] = routeArray.at(-1).slice(0, routeArray.at(-1).length - 3);
@@ -72,7 +72,7 @@ export class App {
   }
 
   private addMiddleware(mWarePath: string, handler: Handler) {
-    const mWareArray = mWarePath.split(/\\+/);
+    const mWareArray = mWarePath.split(/(\\|\/)+/).map(v => v.replace(/(\/|\\)/g, "").trim()).filter(v => v?.length);
     if (mWareArray.at(-1).startsWith("index.")) mWareArray.pop();
     else if (mWareArray.at(-1).endsWith(".ts") || mWareArray.at(-1).endsWith(".js"))
       mWareArray[mWareArray.length - 1] = mWareArray.at(-1).slice(0, mWareArray.at(-1).length - 3);
