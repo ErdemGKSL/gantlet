@@ -56,6 +56,11 @@ export class HttpServer {
                 return;
               }
 
+              if (!!data && data.statusCode && data.payload) {
+                res.statusCode = data.statusCode;
+                data = data.payload;
+              }
+
               if (!res.writableEnded && !isEventEmitter) {
                 switch (typeof data) {
                   case "string": case "function": {
