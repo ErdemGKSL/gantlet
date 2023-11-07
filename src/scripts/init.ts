@@ -79,7 +79,7 @@ export async function init(directory: string) {
   }
 }
 
-function findPackageJsonDirectory(directoryPath: string, depth = 0) {
+export function findPackageJsonDirectory(directoryPath: string, depth = 0) {
   const packageJsonPath = path.resolve(directoryPath, "package.json");
   if (fs.existsSync(packageJsonPath)) return path.resolve(path.dirname(packageJsonPath));
   if (depth > 10) return null;

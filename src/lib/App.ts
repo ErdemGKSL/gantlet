@@ -48,10 +48,13 @@ export class App {
   public bindings = new Bindings(this);
 
   constructor(routesPath?: PathLike) {
-    this.path = routesPath ? path.resolve(process.cwd(), routesPath.toString()) : path.resolve(path.dirname(getFilePathFromCallStack()), "./routes")
+    this.path = routesPath ?
+      path.resolve(process.cwd(), routesPath.toString()) :
+      path.resolve(path.dirname(getFilePathFromCallStack()), "./routes")
   }
 
   public async listen(port: number, cb?: () => void, onError?: (error: Error) => void) {
+    if (global["__gantlet_build"]) return;
     await recursiveImport(this.path);
     if (!this.httpServer) this.httpServer = new HttpServer(port, this);
     onError && (this.httpServer.onError = onError);
@@ -78,15 +81,25 @@ export class App {
     this.middlewares.push(mWare);
   }
 
-  public use(handler: Handler) {
-    const mWarePath = path.relative(this.path, getFilePathFromCallStack());
+
+  public use(path: string, handler: Handler): void;
+  public use(handler: Handler): void;
+  public use(...args: any[]) {
+    const handler = args.pop();
+    const path = args.pop();
+
+    const mWarePath = path || path.relative(this.path, getFilePathFromCallStack());
     this.addMiddleware(
       mWarePath,
       handler
     );
   }
 
-  public all(handler: Handler) {
+  public all(path: string, handler: Handler): void;
+  public all(handler: Handler): void;
+  public all(...args: any[]) {
+    const handler = args.pop();
+    const path = args.pop();
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "ALL",
@@ -94,7 +107,11 @@ export class App {
     );
   }
 
-  public get(handler: Handler) {
+  public get(path: string, handler: Handler): void;
+  public get(handler: Handler): void;
+  public get(...args: any[]) {
+    const handler = args.pop();
+    const path = args.pop();
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "GET",
@@ -102,7 +119,11 @@ export class App {
     );
   }
 
-  public post(handler: Handler) {
+  public post(path: string, handler: Handler): void;
+  public post(handler: Handler): void;
+  public post(...args: any[]) {
+    const handler = args.pop();
+    const path = args.pop();
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "POST",
@@ -110,7 +131,11 @@ export class App {
     );
   }
 
-  public put(handler: Handler) {
+  public put(path: string, handler: Handler): void;
+  public put(handler: Handler): void;
+  public put(...args: any[]) {
+    const handler = args.pop();
+    const path = args.pop();
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "PUT",
@@ -118,7 +143,11 @@ export class App {
     );
   }
 
-  public delete(handler: Handler) {
+  public delete(path: string, handler: Handler): void;
+  public delete(handler: Handler): void;
+  public delete(...args: any[]) {
+    const handler = args.pop();
+    const path = args.pop();
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "DELETE",
@@ -126,7 +155,11 @@ export class App {
     );
   }
 
-  public patch(handler: Handler) {
+  public patch(path: string, handler: Handler): void;
+  public patch(handler: Handler): void;
+  public patch(...args: any[]) {
+    const handler = args.pop();
+    const path = args.pop();
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "PATCH",
@@ -134,7 +167,11 @@ export class App {
     );
   }
 
-  public options(handler: Handler) {
+  public options(path: string, handler: Handler): void;
+  public options(handler: Handler): void;
+  public options(...args: any[]) {
+    const handler = args.pop();
+    const path = args.pop();
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "OPTIONS",
@@ -142,7 +179,11 @@ export class App {
     );
   }
 
-  public head(handler: Handler) {
+  public head(path: string, handler: Handler): void;
+  public head(handler: Handler): void;
+  public head(...args: any[]) {
+    const handler = args.pop();
+    const path = args.pop();
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "HEAD",
@@ -150,7 +191,11 @@ export class App {
     );
   }
 
-  public connect(handler: Handler) {
+  public connect(path: string, handler: Handler): void;
+  public connect(handler: Handler): void;
+  public connect(...args: any[]) {
+    const handler = args.pop();
+    const path = args.pop();
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "CONNECT",
@@ -158,7 +203,11 @@ export class App {
     );
   }
 
-  public trace(handler: Handler) {
+  public trace(path: string, handler: Handler): void;
+  public trace(handler: Handler): void;
+  public trace(...args: any[]) {
+    const handler = args.pop();
+    const path = args.pop();
     this.addRoute(
       path.relative(this.path, getFilePathFromCallStack()),
       "TRACE",

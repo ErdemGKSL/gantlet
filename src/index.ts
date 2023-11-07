@@ -15,6 +15,11 @@ if (require.main === module) {
       .description("Initialize a new project")
       .argument("<directory>", "The directory to initialize the project in")
       .action(scripts.init)
+    
+  program
+    .command("build")
+      .description("Build the project")
+      .action(scripts.build)
       
   program.parse(process.argv);
 }
