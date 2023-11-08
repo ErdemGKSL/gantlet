@@ -10,7 +10,7 @@ export class Route {
       path: this.path
         .filter(p => !(p.startsWith("(") && p.endsWith(")")))
         .map((p) => (p.startsWith("[") && p.endsWith("]")) ? `:${p.slice(1, -1)}` : p)
-        .join("/")
+        .join("/") || "/"
     }
   }
 }
